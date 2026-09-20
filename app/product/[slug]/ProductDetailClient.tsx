@@ -36,6 +36,11 @@ export default function ProductDetailClient({ product, related }: { product: any
     setTimeout(() => setToast(""), 2500);
   }
 
+  function handleWhatsAppOrder() {
+    const text = `عايز أطلب: ${product.name}\nالكمية: ${quantity}\nالسعر: ${effectivePrice} جنيه\nالرابط: ${window.location.href}`;
+    window.open(`https://wa.me/201206306778?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <nav className="text-xs text-gray-500 mb-6">
@@ -43,7 +48,6 @@ export default function ProductDetailClient({ product, related }: { product: any
       </nav>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Gallery */}
         <div>
           <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
             <Image src={images[activeImage].url} alt={product.name} fill className="object-cover" />
@@ -65,7 +69,6 @@ export default function ProductDetailClient({ product, related }: { product: any
           )}
         </div>
 
-        {/* Info */}
         <div>
           <h1 className="text-2xl font-bold">{product.name}</h1>
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
@@ -132,6 +135,14 @@ export default function ProductDetailClient({ product, related }: { product: any
             </button>
           </div>
 
+          <button
+            type="button"
+            onClick={handleWhatsAppOrder}
+            className="mt-3 w-full bg-green-500 hover:bg-green-600 text-white rounded-lg py-2.5 font-bold"
+          >
+            اطلب عبر واتساب
+          </button>
+
           {toast && (
             <div className="mt-3 bg-green-50 text-green-700 text-sm rounded-md px-3 py-2">{toast}</div>
           )}
@@ -145,7 +156,6 @@ export default function ProductDetailClient({ product, related }: { product: any
         </div>
       </div>
 
-      {/* Reviews */}
       <section className="mt-12 border-t border-gray-100 pt-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">تقييمات العملاء ({product.ratingCount})</h3>
@@ -177,7 +187,6 @@ export default function ProductDetailClient({ product, related }: { product: any
         )}
       </section>
 
-      {/* Related */}
       {related?.length > 0 && (
         <section className="mt-12 border-t border-gray-100 pt-8">
           <h3 className="text-lg font-bold mb-4">منتجات ذات صلة</h3>
@@ -203,4 +212,4 @@ export default function ProductDetailClient({ product, related }: { product: any
       )}
     </div>
   );
-}
+              }
