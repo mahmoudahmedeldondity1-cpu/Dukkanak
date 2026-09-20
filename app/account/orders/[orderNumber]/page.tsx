@@ -141,6 +141,5 @@ export default async function OrderDetailPage({
           </p>
       </div>
     </div>
-  ;(
-    {
-  
+      );
+}
