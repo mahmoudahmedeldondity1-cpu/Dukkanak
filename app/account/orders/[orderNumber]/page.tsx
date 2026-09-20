@@ -138,8 +138,9 @@ export default async function OrderDetailPage({
           {order.paymentMethod === "COD"
             ? "الدفع عند الاستلام"
             : order.paymentMethod}
-        </p>
+          </p>
       </div>
     </div>
-  );
-  {
+  ;(
+    {
+  
