@@ -34,8 +34,9 @@ export default function CartPage() {
 
   function handleWhatsAppOrder() {
     const lines = items.map(
-      (item) => `- \( {item.name} \){item.variantName ? ` (${item.variantName})` : ""} × ${item.quantity} = ${item.price * item.quantity} جنيه`
-    );
+  (item) =>
+    `- ${item.name}${item.variantName ? ` (${item.variantName})` : ""} × ${item.quantity} = ${item.price * item.quantity} جنيه`
+);
     const text = `طلب جديد من دكّانك:\n${lines.join("\n")}\n\nالإجمالي: ${total} جنيه`;
     window.open(`https://wa.me/201206306778?text=${encodeURIComponent(text)}`, "_blank");
   }
