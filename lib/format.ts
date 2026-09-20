@@ -1,5 +1,5 @@
-export function formatEGP(amount: number | string): string {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+export function formatEGP(amount: number | string | { toString(): string }): string {
+  const num = typeof amount === "number" ? amount : parseFloat(amount.toString());
   return `${new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(num)} جنيه`;
 }
 
