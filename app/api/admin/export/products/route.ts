@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminRole } from "@/lib/auth";
+export const dynamic = "force-dynamic";
 
 function toCsvValue(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);

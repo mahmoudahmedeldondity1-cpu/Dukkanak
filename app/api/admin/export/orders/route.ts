@@ -4,34 +4,63 @@ import { getServerSession } from "next-auth";
 import { authOptions, isAdminRole } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 
+export const dynamic = "force-dynamic";
+
 function toCsvValue(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);
+
   if (s.includes(",") || s.includes('"') || s.includes("\n")) {
     return `"${s.replace(/"/g, '""')}"`;
   }
+
   return s;
 }
 
 export async function GET() {
   const session = await getServerSession(authOptions);
+
   if (!session || !isAdminRole((session.user as any)?.role)) {
-    return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء" }, { status: 403 });
+    return NextResponse.json(
+      { error: "غير مصرح لك بهذا الإجراء" },
+      { status: 403 }
+    );
   }
 
   const orders = await prisma.order.findMany({
-    include: { items: true },
-    orderBy: { createdAt: "desc" },
+    include: {
+      items: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   const headers = [
-    "orderNumber", "customerName", "phone", "total", "paymentMethod", "paymentStatus", "status", "itemsCount", "createdAt",
+    "orderNumber",
+    "customerName",
+    "phone",
+    "total",
+    "paymentMethod",
+    "paymentStatus",
+    "status",
+    "itemsCount",
+    "createdAt",
   ];
 
-  const rows = orders.map((o) =>
+  const rows = orders.map((order) =>
     [
-      o.orderNumber, o.fullName, o.phone, o.total.toString(), o.paymentMethod,
-      o.paymentStatus, o.status, o.items.length, formatDate(o.createdAt),
-    ].map(toCsvValue).join(",")
+      order.orderNumber,
+      order.fullName,
+      order.phone,
+      order.total.toString(),
+      order.paymentMethod,
+      order.paymentStatus,
+      order.status,
+      order.items.length,
+      formatDate(order.createdAt),
+    ]
+      .map(toCsvValue)
+      .join(",")
   );
 
   const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
