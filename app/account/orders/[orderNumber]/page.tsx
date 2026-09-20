@@ -24,14 +24,21 @@ export default async function OrderDetailPage({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session) redirect("/login");
+  if (!session) {
+    redirect("/login");
+  }
 
   const order = await prisma.order.findUnique({
     where: { orderNumber: params.orderNumber },
-    include: { items: true, address: true },
+    include: {
+      items: true,
+      address: true,
+    },
   });
 
-  if (!order) notFound();
+  if (!order) {
+    notFound();
+  }
 
   const isAdmin = isAdminRole((session.user as any)?.role);
 
@@ -77,7 +84,9 @@ export default async function OrderDetailPage({
           {Number(order.discount) > 0 && (
             <div className="flex justify-between text-green-700">
               <span>الخصم</span>
-              <span>−{formatEGP(Number(order.discount))}</span>
+              <span>
+                −{formatEGP(Number(order.discount))}
+              </span>
             </div>
           )}
 
@@ -98,7 +107,9 @@ export default async function OrderDetailPage({
       </div>
 
       <div className="card p-5 mt-4 text-sm text-gray-600 space-y-1">
-        <h3 className="font-semibold text-ink mb-2">عنوان الشحن</h3>
+        <h3 className="font-semibold text-ink mb-2">
+          عنوان الشحن
+        </h3>
 
         <p>
           {order.fullName} — {order.phone}
@@ -112,7 +123,9 @@ export default async function OrderDetailPage({
         {order.trackingNumber && (
           <p className="mt-2">
             رقم التتبع:{" "}
-            <span className="font-mono">{order.trackingNumber}</span>
+            <span className="font-mono">
+              {order.trackingNumber}
+            </span>
           </p>
         )}
 
@@ -129,4 +142,4 @@ export default async function OrderDetailPage({
       </div>
     </div>
   );
-          }
+  {
