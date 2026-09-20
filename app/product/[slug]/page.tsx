@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 async function getProduct(slug: string) {
   const product = await prisma.product.findUnique({
     where: { slug },

@@ -4,6 +4,8 @@ import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 async function getCategoryData(slug: string) {
   const category = await prisma.category.findUnique({
     where: { slug },
