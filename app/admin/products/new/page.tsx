@@ -12,8 +12,8 @@ export default function NewProductPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function slugify(text: string) {
-    return text.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\u0600-\u06FF-]/g, "");
+  function slugify(sku: string) {
+    return sku.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +27,7 @@ export default function NewProductPage() {
       body: JSON.stringify({
         sku: form.sku,
         name: form.name,
-        slug: form.slug || slugify(form.name),
+        slug: form.slug || slugify(form.sku),
         price: parseFloat(form.price),
         oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : undefined,
         stock: parseInt(form.stock || "0"),
