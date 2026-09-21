@@ -18,7 +18,7 @@ export default function CartPage() {
 
   async function applyCoupon() {
     if (!coupon.trim()) return;
-    const res = await fetch(`/api/coupons/validate?code=${encodeURIComponent(coupon)}&subtotal=${subtotal}`);
+    const res = await fetch(`/api/coupons/validate?code=\( {encodeURIComponent(coupon)}&subtotal= \){subtotal}`);
     const data = await res.json();
     if (res.ok) {
       setDiscount(data.discount);
@@ -31,6 +31,15 @@ export default function CartPage() {
 
   const shippingFee = subtotal > 0 && subtotal < 1000 ? 60 : 0;
   const total = subtotal - discount + shippingFee;
+
+  function handleWhatsAppOrder() {
+    const lines = items.map(
+  (item) =>
+    `- ${item.name}${item.variantName ? ` (${item.variantName})` : ""} × ${item.quantity} = ${item.price * item.quantity} جنيه`
+);
+    const text = `طلب جديد من دكّانك:\n${lines.join("\n")}\n\nالإجمالي: ${total} جنيه`;
+    window.open(`https://wa.me/201206306778?text=${encodeURIComponent(text)}`, "_blank");
+  }
 
   if (items.length === 0) {
     return (
@@ -48,7 +57,7 @@ export default function CartPage() {
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-4">
           {items.map((item) => (
-            <div key={`${item.productId}-${item.variantId}`} className="card p-4 flex gap-4">
+            <div key={`\( {item.productId}- \){item.variantId}`} className="card p-4 flex gap-4">
               <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-gray-50">
                 <Image src={item.image} alt={item.name} fill className="object-cover" />
               </div>
@@ -121,10 +130,17 @@ export default function CartPage() {
             </div>
           </div>
 
-          <Link href="/checkout" className="btn-primary w-full mt-5">إتمام الطلب</Link>
+          <button
+            type="button"
+            onClick={handleWhatsAppOrder}
+            className="w-full mt-5 bg-green-500 hover:bg-green-600 text-white rounded-lg py-2.5 font-bold"
+          >
+            اطلب عبر واتساب
+          </button>
+          <Link href="/checkout" className="btn-primary w-full mt-3 block text-center">إتمام الطلب من الموقع</Link>
           <Link href="/products" className="block text-center text-sm text-gray-500 mt-3">متابعة التسوق</Link>
         </div>
       </div>
     </div>
   );
-}
+                      }

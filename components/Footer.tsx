@@ -28,13 +28,43 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <div className="text-white font-semibold mb-3">الدفع والشحن</div>
-          <p className="text-gray-400">الدفع عند الاستلام متاح لكل الطلبات، وشحن لكل محافظات مصر.</p>
+          <div className="text-white font-semibold mb-3">تواصل واتساب</div>
+          <ul className="space-y-2 text-gray-400">
+            <li>
+              <a
+                href="https://wa.me/201206306778"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white"
+              >
+                01206306778
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://wa.me/201039265524"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white"
+              >
+                01039265524
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-gray-500">
         © {new Date().getFullYear()} دُكَّانَكْ. جميع الحقوق محفوظة.
       </div>
+
+      <a
+        href="https://wa.me/201206306778"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 left-5 z-50 bg-green-500 text-white rounded-full px-4 py-3 text-sm font-bold shadow-lg"
+      >
+        واتساب
+      </a>
     </footer>
   );
 }
