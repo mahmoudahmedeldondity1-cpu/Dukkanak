@@ -18,11 +18,16 @@ export default function CartPage() {
 
   async function applyCoupon() {
     if (!coupon.trim()) return;
-    const res = await fetch(`/api/coupons/validate?code=\( {encodeURIComponent(coupon)}&subtotal= \){subtotal}`);
+    const url =
+      "/api/coupons/validate?code=" +
+      encodeURIComponent(coupon) +
+      "&subtotal=" +
+      String(subtotal);
+    const res = await fetch(url);
     const data = await res.json();
     if (res.ok) {
       setDiscount(data.discount);
-      setCouponMsg(`تم تطبيق الكوبون - خصم ${formatEGP(data.discount)}`);
+      setCouponMsg("تم تطبيق الكوبون - خصم " + formatEGP(data.discount));
     } else {
       setDiscount(0);
       setCouponMsg(data.error || "الكوبون غير صالح");
@@ -33,19 +38,38 @@ export default function CartPage() {
   const total = subtotal - discount + shippingFee;
 
   function handleWhatsAppOrder() {
-    const lines = items.map(
-  (item) =>
-    `- ${item.name}${item.variantName ? ` (${item.variantName})` : ""} × ${item.quantity} = ${item.price * item.quantity} جنيه`
-);
-    const text = `طلب جديد من دكّانك:\n${lines.join("\n")}\n\nالإجمالي: ${total} جنيه`;
-    window.open(`https://wa.me/201206306778?text=${encodeURIComponent(text)}`, "_blank");
+    const lines = items.map(function (item) {
+      const variant = item.variantName ? " - " + item.variantName : "";
+      return (
+        "- " +
+        item.name +
+        variant +
+        " x " +
+        item.quantity +
+        " = " +
+        item.price * item.quantity +
+        " EGP"
+      );
+    });
+    const text =
+      "طلب جديد من دكانك:\n" +
+      lines.join("\n") +
+      "\n\nالإجمالي: " +
+      total +
+      " جنيه";
+    window.open(
+      "https://wa.me/201206306778?text=" + encodeURIComponent(text),
+      "_blank"
+    );
   }
 
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
         <p className="text-lg text-gray-600 mb-6">السلة فارغة</p>
-        <Link href="/products" className="btn-primary">تابع التسوق</Link>
+        <Link href="/products" className="btn-primary">
+          تابع التسوق
+        </Link>
       </div>
     );
   }
@@ -57,27 +81,36 @@ export default function CartPage() {
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-4">
           {items.map((item) => (
-            <div key={`\( {item.productId}- \){item.variantId}`} className="card p-4 flex gap-4">
+            <div
+              key={String(item.productId) + "-" + String(item.variantId || "none")}
+              className="card p-4 flex gap-4"
+            >
               <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-gray-50">
                 <Image src={item.image} alt={item.name} fill className="object-cover" />
               </div>
               <div className="flex-1">
                 <h3 className="font-medium">{item.name}</h3>
-                {item.variantName && <p className="text-xs text-gray-500">{item.variantName}</p>}
+                {item.variantName && (
+                  <p className="text-xs text-gray-500">{item.variantName}</p>
+                )}
                 <p className="text-brand-700 font-bold mt-1">{formatEGP(item.price)}</p>
 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center border border-gray-300 rounded-md">
                     <button
                       className="px-2.5 py-1"
-                      onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+                      onClick={() =>
+                        updateQuantity(item.productId, item.quantity - 1, item.variantId)
+                      }
                     >
                       −
                     </button>
                     <span className="px-3 text-sm">{item.quantity}</span>
                     <button
                       className="px-2.5 py-1"
-                      onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+                      onClick={() =>
+                        updateQuantity(item.productId, item.quantity + 1, item.variantId)
+                      }
                       disabled={item.quantity >= item.stock}
                     >
                       +
@@ -105,7 +138,9 @@ export default function CartPage() {
               placeholder="كود الخصم"
               className="input-field"
             />
-            <button onClick={applyCoupon} className="btn-secondary text-sm shrink-0">تطبيق</button>
+            <button onClick={applyCoupon} className="btn-secondary text-sm shrink-0">
+              تطبيق
+            </button>
           </div>
           {couponMsg && <p className="text-xs mb-3 text-gray-600">{couponMsg}</p>}
 
@@ -137,10 +172,14 @@ export default function CartPage() {
           >
             اطلب عبر واتساب
           </button>
-          <Link href="/checkout" className="btn-primary w-full mt-3 block text-center">إتمام الطلب من الموقع</Link>
-          <Link href="/products" className="block text-center text-sm text-gray-500 mt-3">متابعة التسوق</Link>
+          <Link href="/checkout" className="btn-primary w-full mt-3 block text-center">
+            إتمام الطلب من الموقع
+          </Link>
+          <Link href="/products" className="block text-center text-sm text-gray-500 mt-3">
+            متابعة التسوق
+          </Link>
         </div>
       </div>
     </div>
   );
-                      }
+          }
