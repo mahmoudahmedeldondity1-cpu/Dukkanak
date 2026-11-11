@@ -36,12 +36,17 @@ export const GOVERNORATE_SHIPPING_RATES: Record<string, number> = {
   "جنوب سيناء": 110,
 };
 
-export function getShippingFee(governorate?: string | null, subtotalAfterDiscount: number = 0): number {
-  if (subtotalAfterDiscount >= 1000) {
+export function getShippingFee(
+  governorate?: string | null,
+  subtotalAfterDiscount: number = 0,
+  freeShippingThreshold: number = 1000,
+  defaultBaseFee: number = 60
+): number {
+  if (subtotalAfterDiscount >= freeShippingThreshold && freeShippingThreshold > 0) {
     return 0;
   }
   if (!governorate) {
-    return 60;
+    return defaultBaseFee;
   }
-  return GOVERNORATE_SHIPPING_RATES[governorate] ?? 60;
+  return GOVERNORATE_SHIPPING_RATES[governorate] ?? defaultBaseFee;
 }

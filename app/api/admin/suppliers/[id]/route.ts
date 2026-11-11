@@ -78,7 +78,34 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
 
-  await prisma.supplier.delete({
+  // Check if supplier is linked to any products before attempting deletion
+  const linkedProductsCount = await prisma.product.count({
+    where: { supplierId: params.id },
+  });
+
+  if (linkedProductsCount > 0) {
+    // Soft-deactivate instead of hard deleting to preserve referential history
+    const deactivated = await prisma.supplier.update({
+      where: { id: params.id },
+      data: { active: false },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: (session.user as any).id,
+        action: "deactivate_supplier",
+        details: `تم إلغاء تفعيل المورد ${deactivated.name} بدلاً من الحذف لوجود ${linkedProductsCount} منتج مرتبط به`,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `تم إلغاء تفعيل المورد بدلاً من حذفه لوجود ${linkedProductsCount} منتج مرتبط به حفاظًا على سلامة البيانات`,
+      supplier: deactivated,
+    });
+  }
+
+  const supplier = await prisma.supplier.delete({
     where: { id: params.id },
   });
 
@@ -86,7 +113,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     data: {
       userId: (session.user as any).id,
       action: "delete_supplier",
-      details: `تم حذف المورد برقم ${params.id}`,
+      details: `تم حذف المورد ${supplier.name}`,
     },
   });
 

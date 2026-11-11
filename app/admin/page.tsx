@@ -10,7 +10,8 @@ export default async function AdminDashboard() {
     totalProducts,
     lowStock,
     outOfStock,
-    revenueAgg,
+    confirmedRevenueAgg,
+    uncollectedCodAgg,
     shippingAgg,
     recentOrders,
     deliveredOrders,
@@ -21,9 +22,15 @@ export default async function AdminDashboard() {
     prisma.product.count(),
     prisma.product.count({ where: { stock: { gt: 0, lte: 5 } } }),
     prisma.product.count({ where: { stock: 0 } }),
+    // Confirmed collected payments only (PAID)
     prisma.order.aggregate({
       _sum: { total: true, subtotal: true },
-      where: { paymentStatus: { in: ["PAID", "COD"] }, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+      where: { paymentStatus: "PAID", status: { notIn: ["CANCELLED", "REFUNDED"] } },
+    }),
+    // Outstanding Cash on Delivery awaiting courier collection (COD)
+    prisma.order.aggregate({
+      _sum: { total: true },
+      where: { paymentStatus: "COD", status: { notIn: ["CANCELLED", "REFUNDED", "DELIVERED"] } },
     }),
     prisma.order.aggregate({
       _sum: { shippingFee: true },
@@ -36,35 +43,58 @@ export default async function AdminDashboard() {
     }),
   ]);
 
-  const revenue = Number(revenueAgg._sum.total || 0);
-  const grossSales = Number(revenueAgg._sum.subtotal || 0);
+  const confirmedRevenue = Number(confirmedRevenueAgg._sum.total || 0);
+  const grossSales = Number(confirmedRevenueAgg._sum.subtotal || 0);
+  const outstandingCod = Number(uncollectedCodAgg._sum.total || 0);
   const totalShippingCollected = Number(shippingAgg._sum.shippingFee || 0);
 
   // Calculate dropshipping wholesale cost and actual net profit for delivered orders
   let dropshippingWholesaleCost = 0;
+  let itemsWithMissingCostCount = 0;
   for (const order of deliveredOrders) {
     for (const item of order.items) {
-      if (item.costPriceSnapshot) {
+      if (item.costPriceSnapshot !== null && item.costPriceSnapshot !== undefined) {
         dropshippingWholesaleCost += Number(item.costPriceSnapshot) * item.quantity;
+      } else {
+        itemsWithMissingCostCount++;
       }
     }
   }
+  const isCostDataIncomplete = itemsWithMissingCostCount > 0;
   const estimatedNetProfit = deliveredOrders.reduce((acc, o) => acc + Number(o.total), 0) - dropshippingWholesaleCost;
-  const avgOrderValue = totalOrders > 0 ? revenue / totalOrders : 0;
+  const avgOrderValue = totalOrders > 0 ? (confirmedRevenue + outstandingCod) / totalOrders : 0;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">نظرة عامة</h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">نظرة عامة والتقارير المالية</h1>
+          <p className="text-xs text-gray-500 mt-1">
+            متابعة الإيرادات المحصلة، تكاليف الموردين، ومبالغ الدفع عند الاستلام غير المحصلة
+          </p>
+        </div>
+        {isCostDataIncomplete && (
+          <span className="badge bg-amber-50 text-amber-700 text-xs border border-amber-200">
+            تنبيه: يوجد {itemsWithMissingCostCount} منتج بدون سعر تكلفة جملة مسجل (حساب الربح تقديري)
+          </span>
+        )}
+      </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="إجمالي الإيرادات المحصلة" value={formatEGP(revenue)} />
-        <StatCard label="إجمالي المبيعات (Gross)" value={formatEGP(grossSales)} />
-        <StatCard label="صافي الربح المسجل (دروب شيب)" value={formatEGP(estimatedNetProfit)} highlight={estimatedNetProfit > 0} />
-        <StatCard label="تكلفة شراء المنتجات (الموردين)" value={formatEGP(dropshippingWholesaleCost)} />
-        <StatCard label="إجمالي الطلبات" value={String(totalOrders)} />
-        <StatCard label="طلبات قيد الانتظار" value={String(pendingOrders)} highlight={pendingOrders > 0} />
-        <StatCard label="تجهيز وتوريد الموردين" value={String(supplierFulfillmentOrders)} highlight={supplierFulfillmentOrders > 0} />
-        <StatCard label="رسوم الشحن المحصلة" value={formatEGP(totalShippingCollected)} />
+        <StatCard label="الإيرادات المؤكدة المحصلة (PAID)" value={formatEGP(confirmedRevenue)} />
+        <StatCard label="مبالغ COD قيد التحصيل مع الشحن" value={formatEGP(outstandingCod)} highlight={outstandingCod > 0} />
+        <StatCard label="إجمالي مبيعات المنتجات (Gross)" value={formatEGP(grossSales)} />
+        <StatCard
+          label={isCostDataIncomplete ? "صافي الربح (تقديري - بيانات التكلفة غير مكتملة)" : "صافي الربح الفعلي المؤكد"}
+          value={formatEGP(estimatedNetProfit)}
+          highlight={estimatedNetProfit > 0}
+        />
+        <StatCard label="تكلفة شراء المنتجات المسجلة (الموردين)" value={formatEGP(dropshippingWholesaleCost)} />
+        <StatCard label="إجمالي عدد الطلبات" value={String(totalOrders)} />
+        <StatCard label="طلبات جديدة قيد الانتظار" value={String(pendingOrders)} highlight={pendingOrders > 0} />
+        <StatCard label="طلبات قيد التوريد والتجهيز" value={String(supplierFulfillmentOrders)} highlight={supplierFulfillmentOrders > 0} />
+        <StatCard label="إجمالي رسوم الشحن للعملاء" value={formatEGP(totalShippingCollected)} />
+        <StatCard label="متوسط قيمة الطلب (AOV)" value={formatEGP(avgOrderValue)} />
       </div>
 
       <div className="flex items-center justify-between mb-4">

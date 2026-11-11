@@ -66,21 +66,47 @@ export default function AdminSettingsPage() {
             <label className="block text-sm font-medium mb-1">حد الشحن المجاني (جنيه)</label>
             <input
               type="number"
+              placeholder="1000"
               value={settings.free_shipping_threshold || ""}
               onChange={(e) => setSettings({ ...settings, free_shipping_threshold: e.target.value })}
               className="input-field"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">رسوم الشحن الافتراضية</label>
+            <label className="block text-sm font-medium mb-1">رسوم الشحن الأساسية (جنيه)</label>
             <input
               type="number"
+              placeholder="60"
               value={settings.default_shipping_fee || ""}
               onChange={(e) => setSettings({ ...settings, default_shipping_fee: e.target.value })}
               className="input-field"
             />
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">فترة الاسترجاع المسموحة (أيام)</label>
+            <input
+              type="number"
+              placeholder="14"
+              value={settings.return_window_days || "14"}
+              onChange={(e) => setSettings({ ...settings, return_window_days: e.target.value })}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">تكلفة الشحن لشركات التوصيل (تقديري)</label>
+            <input
+              type="number"
+              placeholder="45"
+              value={settings.courier_cost_per_order || ""}
+              onChange={(e) => setSettings({ ...settings, courier_cost_per_order: e.target.value })}
+              className="input-field"
+            />
+          </div>
+        </div>
+
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

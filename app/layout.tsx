@@ -12,6 +12,9 @@ const cairo = Cairo({
   subsets: ["arabic", "latin"],
   variable: "--font-cairo",
   weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  preload: false,
+  fallback: ["Tahoma", "Segoe UI", "Arial", "sans-serif"],
 });
 
 import { getSiteUrl, SITE_NAME_AR } from "@/lib/config";

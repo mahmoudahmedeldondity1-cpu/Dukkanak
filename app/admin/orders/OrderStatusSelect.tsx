@@ -24,6 +24,7 @@ export default function OrderStatusSelect({ orderId, status }: { orderId: string
 
   async function handleChange(newStatus: string) {
     setLoading(true);
+    // Never auto-mark COD orders as PAID on delivery. Collection confirmation must remain independent.
     await fetch(`/api/orders/${orderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -34,15 +35,17 @@ export default function OrderStatusSelect({ orderId, status }: { orderId: string
   }
 
   return (
-    <select
-      defaultValue={status}
-      disabled={loading}
-      onChange={(e) => handleChange(e.target.value)}
-      className="text-xs border border-gray-300 rounded-md px-2 py-1"
-    >
-      {statuses.map((s) => (
-        <option key={s.value} value={s.value}>{s.label}</option>
-      ))}
-    </select>
+    <div className="flex items-center gap-2">
+      <select
+        defaultValue={status}
+        disabled={loading}
+        onChange={(e) => handleChange(e.target.value)}
+        className="text-xs border border-gray-300 rounded-md px-2 py-1"
+      >
+        {statuses.map((s) => (
+          <option key={s.value} value={s.value}>{s.label}</option>
+        ))}
+      </select>
+    </div>
   );
 }

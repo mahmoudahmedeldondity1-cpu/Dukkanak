@@ -67,7 +67,7 @@ export default function OrderReturnButton({
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 text-right">
             <h3 className="text-lg font-bold mb-3">طلب استرجاع / إلغاء</h3>
             <p className="text-xs text-gray-500 mb-4">
-              يمكنك طلب استرجاع المنتجات خلال 14 يومًا من تاريخ الاستلام في حال وجود عيب صناعة أو عدم مطابقة للمواصفات.
+              يمكنك تقديم طلب استرجاع أو استبدال للمنتجات في حال وجود عيب صناعة، تلف أثناء الشحن، أو عدم مطابقة للمواصفات طبقًا لسياسة المتجر المعتمدة.
             </p>
 
             {error && (

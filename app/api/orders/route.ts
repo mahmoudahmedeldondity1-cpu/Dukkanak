@@ -105,17 +105,34 @@ export async function POST(req: NextRequest) {
           quantity: item.quantity,
         });
 
-        // Decrement stock
+        // Atomic conditional decrement to guarantee zero overselling under concurrent requests
         if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
+          const updatedVariant = await tx.productVariant.updateMany({
+            where: {
+              id: item.variantId,
+              stock: { gte: item.quantity },
+            },
             data: { stock: { decrement: item.quantity } },
           });
+
+          if (updatedVariant.count === 0) {
+            throw new Error(`الكمية المطلوبة من "${product.name}" غير متوفرة حاليًا بسبب طلبات أخرى متزامنة`);
+          }
         } else {
-          await tx.product.update({
-            where: { id: product.id },
-            data: { stock: { decrement: item.quantity }, soldCount: { increment: item.quantity } },
+          const updatedProduct = await tx.product.updateMany({
+            where: {
+              id: product.id,
+              stock: { gte: item.quantity },
+            },
+            data: {
+              stock: { decrement: item.quantity },
+              soldCount: { increment: item.quantity },
+            },
           });
+
+          if (updatedProduct.count === 0) {
+            throw new Error(`الكمية المطلوبة من "${product.name}" غير متوفرة حاليًا بسبب طلبات أخرى متزامنة`);
+          }
         }
 
         await tx.inventoryLog.create({
