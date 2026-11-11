@@ -3,6 +3,7 @@ import { authOptions, isAdminRole } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatEGP, formatDate } from "@/lib/format";
+import OrderReturnButton from "./OrderReturnButton";
 
 const statusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
@@ -20,7 +21,7 @@ const statusLabels: Record<string, string> = {
 export default async function OrderDetailPage({
   params,
 }: {
-  params: { orderNumber: string };
+  params: Promise<{ orderNumber: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -28,11 +29,16 @@ export default async function OrderDetailPage({
     redirect("/login");
   }
 
+  const { orderNumber } = await params;
+
   const order = await prisma.order.findUnique({
-    where: { orderNumber: params.orderNumber },
+    where: { orderNumber },
     include: {
       items: true,
       address: true,
+      returnRequests: {
+        select: { id: true, status: true },
+      },
     },
   });
 
@@ -136,10 +142,17 @@ export default async function OrderDetailPage({
         <p>
           طريقة الدفع:{" "}
           {order.paymentMethod === "COD"
-            ? "الدفع عند الاستلام"
+            ? "الدفع عند الاستلام (COD)"
             : order.paymentMethod}
-          </p>
+        </p>
       </div>
+
+      {order.status !== "CANCELLED" && order.status !== "REFUNDED" && (
+        <OrderReturnButton
+          orderId={order.id}
+          hasExistingRequest={order.returnRequests.length > 0}
+        />
+      )}
     </div>
-      );
+  );
 }

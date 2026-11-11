@@ -4,8 +4,9 @@ import { formatEGP } from "@/lib/format";
 import ProductRowActions from "./ProductRowActions";
 import ProductsCsvTools from "./ProductsCsvTools";
 
-export default async function AdminProductsPage({ searchParams }: { searchParams: { q?: string } }) {
-  const q = searchParams.q || "";
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const resolved = await searchParams;
+  const q = resolved.q || "";
 
   const products = await prisma.product.findMany({
     where: q

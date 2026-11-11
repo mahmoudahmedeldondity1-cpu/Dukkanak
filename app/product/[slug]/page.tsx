@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
 import type { Metadata } from "next";
+import { getSiteUrl, SITE_NAME_AR } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -52,35 +53,36 @@ async function getProduct(rawSlug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await Promise.resolve(params);
+  const { slug } = await params;
   const data = await getProduct(slug);
 
   if (!data) return {};
 
   const product = data.product;
+  const siteUrl = getSiteUrl();
 
   return {
-    title: product.seoTitle || `${product.name} | دُكَّانَكْ`,
+    title: product.seoTitle || `${product.name} | ${SITE_NAME_AR}`,
 
     description:
       product.seoDesc ||
       product.shortDesc ||
-      `اشترِ ${product.name} من دُكَّانَكْ.`,
+      `اشترِ ${product.name} من ${SITE_NAME_AR}.`,
 
     alternates: {
-      canonical: `https://dukanak.vercel.app/products/${product.slug}`,
+      canonical: `${siteUrl}/product/${product.slug}`,
     },
 
     openGraph: {
-      title: product.seoTitle || `${product.name} | دُكَّانَكْ`,
+      title: product.seoTitle || `${product.name} | ${SITE_NAME_AR}`,
       description:
         product.seoDesc ||
         product.shortDesc ||
-        `اشترِ ${product.name} من دُكَّانَكْ.`,
-      url: `https://dukanak.vercel.app/products/${product.slug}`,
-      siteName: "دُكَّانَكْ",
+        `اشترِ ${product.name} من ${SITE_NAME_AR}.`,
+      url: `${siteUrl}/product/${product.slug}`,
+      siteName: SITE_NAME_AR,
       locale: "ar_EG",
       type: "website",
 
@@ -105,15 +107,16 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await Promise.resolve(params);
+  const { slug } = await params;
 
   const data = await getProduct(slug);
 
   if (!data) notFound();
 
   const { product, related } = data;
+  const siteUrl = getSiteUrl();
 
   /*
    * Product Schema
@@ -129,27 +132,27 @@ export default async function ProductPage({
     description:
       product.seoDesc ||
       product.shortDesc ||
-      product.description ||
+      product.fullDesc ||
       undefined,
 
-    url: `https://dukanak.vercel.app/products/${product.slug}`,
+    url: `${siteUrl}/product/${product.slug}`,
 
     image:
       product.images.length > 0
         ? product.images.map((image) => image.url)
-        : ["https://dukanak.vercel.app/placeholder-product.png"],
+        : [`${siteUrl}/placeholder-product.png`],
 
     brand: {
       "@type": "Brand",
-      name: "دُكَّانَكْ",
+      name: SITE_NAME_AR,
     },
 
-    sku: product.id,
+    sku: product.sku || product.id,
 
     offers: {
       "@type": "Offer",
 
-      url: `https://dukanak.vercel.app/products/${product.slug}`,
+      url: `${siteUrl}/product/${product.slug}`,
 
       priceCurrency: "EGP",
 

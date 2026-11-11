@@ -5,8 +5,11 @@ import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useCartStore } from "@/lib/store/cart";
 import { formatEGP } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Header() {
+  const { t, locale } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<{ products: any[]; categories: any[] }>({ products: [], categories: [] });
@@ -59,14 +62,14 @@ export default function Header() {
         </button>
 
         <Link href="/" className="text-2xl font-extrabold text-brand-600 shrink-0">
-          دُكَّانَكْ
+          {t.common.siteName}
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium mr-6">
-          <Link href="/" className="hover:text-brand-600">الرئيسية</Link>
-          <Link href="/products" className="hover:text-brand-600">جميع المنتجات</Link>
-          <Link href="/deals" className="hover:text-brand-600">العروض</Link>
-          <Link href="/new" className="hover:text-brand-600">وصل حديثًا</Link>
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <Link href="/" className="hover:text-brand-600">{t.nav.home}</Link>
+          <Link href="/products" className="hover:text-brand-600">{t.nav.products}</Link>
+          <Link href="/deals" className="hover:text-brand-600">{t.nav.deals}</Link>
+          <Link href="/new" className="hover:text-brand-600">{t.nav.newArrivals}</Link>
         </nav>
 
         <form
@@ -83,7 +86,7 @@ export default function Header() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setShowSuggestions(true)}
-            placeholder="ابحث عن منتج..."
+            placeholder={t.common.searchPlaceholder}
             className="input-field"
           />
           {showSuggestions && (suggestions.products.length > 0 || suggestions.categories.length > 0) && (
@@ -113,8 +116,10 @@ export default function Header() {
           )}
         </form>
 
-        <div className="flex items-center gap-3 mr-auto sm:mr-0">
-          <Link href="/wishlist" aria-label="المفضلة" className="p-2">
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+
+          <Link href="/wishlist" aria-label={t.nav.wishlist} className="p-2">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M12 21s-7-4.5-9.5-9C.5 8 2 4 6 4c2 0 3.5 1.2 4 2.5C10.5 5.2 12 4 14 4c4 0 5.5 4 3.5 8-2.5 4.5-9.5 9-9.5 9z" stroke="currentColor" strokeWidth="1.6" />
             </svg>
@@ -143,29 +148,29 @@ export default function Header() {
               </button>
               <div className="absolute left-0 top-full pt-2 hidden group-hover:block">
                 <div className="card shadow-lg w-44 py-2 text-sm">
-                  <Link href="/account" className="block px-4 py-2 hover:bg-gray-50">حسابي</Link>
-                  <Link href="/account/orders" className="block px-4 py-2 hover:bg-gray-50">طلباتي</Link>
+                  <Link href="/account" className="block px-4 py-2 hover:bg-gray-50">{t.nav.account}</Link>
+                  <Link href="/account/orders" className="block px-4 py-2 hover:bg-gray-50">{t.nav.orders}</Link>
                   {(session.user as any)?.role === "ADMIN" && (
-                    <Link href="/admin" className="block px-4 py-2 hover:bg-gray-50">لوحة التحكم</Link>
+                    <Link href="/admin" className="block px-4 py-2 hover:bg-gray-50">{t.nav.admin}</Link>
                   )}
-                  <button onClick={() => signOut()} className="block w-full text-right px-4 py-2 hover:bg-gray-50 text-red-600">
-                    تسجيل الخروج
+                  <button onClick={() => signOut()} className={`block w-full ${locale === "ar" ? "text-right" : "text-left"} px-4 py-2 hover:bg-gray-50 text-red-600`}>
+                    {t.nav.logout}
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <Link href="/login" className="btn-secondary text-sm !px-3 !py-1.5">تسجيل الدخول</Link>
+            <Link href="/login" className="btn-secondary text-sm !px-3 !py-1.5">{t.nav.login}</Link>
           )}
         </div>
       </div>
 
       {menuOpen && (
         <nav className="md:hidden border-t border-gray-200 px-4 py-3 flex flex-col gap-3 text-sm font-medium">
-          <Link href="/" onClick={() => setMenuOpen(false)}>الرئيسية</Link>
-          <Link href="/products" onClick={() => setMenuOpen(false)}>جميع المنتجات</Link>
-          <Link href="/deals" onClick={() => setMenuOpen(false)}>العروض</Link>
-          <Link href="/new" onClick={() => setMenuOpen(false)}>وصل حديثًا</Link>
+          <Link href="/" onClick={() => setMenuOpen(false)}>{t.nav.home}</Link>
+          <Link href="/products" onClick={() => setMenuOpen(false)}>{t.nav.products}</Link>
+          <Link href="/deals" onClick={() => setMenuOpen(false)}>{t.nav.deals}</Link>
+          <Link href="/new" onClick={() => setMenuOpen(false)}>{t.nav.newArrivals}</Link>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -176,7 +181,7 @@ export default function Header() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="ابحث عن منتج..."
+              placeholder={t.common.searchPlaceholder}
               className="input-field"
             />
           </form>
