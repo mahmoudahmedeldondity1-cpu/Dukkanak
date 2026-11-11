@@ -1,34 +1,39 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "@/lib/i18n";
 
 export default function Footer() {
+  const { t } = useLocale();
+
   return (
     <footer className="bg-ink text-gray-300 mt-16">
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
         <div>
-          <div className="text-white text-xl font-extrabold mb-3">دُكَّانَكْ</div>
+          <div className="text-white text-xl font-extrabold mb-3">{t.common.siteName}</div>
           <p className="text-gray-400 leading-relaxed">
-            متجرك المصري لتسوق منتجات متنوعة بأسعار مناسبة، مع الدفع عند الاستلام وشحن لكل المحافظات.
+            {t.footer.aboutText}
           </p>
         </div>
         <div>
-          <div className="text-white font-semibold mb-3">تعرف علينا</div>
+          <div className="text-white font-semibold mb-3">{t.footer.quickLinks}</div>
           <ul className="space-y-2 text-gray-400">
-            <li><Link href="/about">من نحن</Link></li>
-            <li><Link href="/contact">اتصل بنا</Link></li>
-            <li><Link href="/faq">الأسئلة الشائعة</Link></li>
+            <li><Link href="/about">{t.common.siteName}</Link></li>
+            <li><Link href="/contact">{t.footer.contactUs}</Link></li>
+            <li><Link href="/faq">{t.footer.faq}</Link></li>
           </ul>
         </div>
         <div>
-          <div className="text-white font-semibold mb-3">خدمة العملاء</div>
+          <div className="text-white font-semibold mb-3">{t.footer.customerService}</div>
           <ul className="space-y-2 text-gray-400">
-            <li><Link href="/shipping-policy">سياسة الشحن</Link></li>
-            <li><Link href="/return-policy">الاسترجاع والاستبدال</Link></li>
-            <li><Link href="/privacy">سياسة الخصوصية</Link></li>
-            <li><Link href="/terms">الشروط والأحكام</Link></li>
+            <li><Link href="/shipping-policy">{t.footer.shippingPolicy}</Link></li>
+            <li><Link href="/return-policy">{t.footer.returnPolicy}</Link></li>
+            <li><Link href="/privacy">{t.footer.privacy}</Link></li>
+            <li><Link href="/terms">{t.footer.terms}</Link></li>
           </ul>
         </div>
         <div>
-          <div className="text-white font-semibold mb-3">تواصل واتساب</div>
+          <div className="text-white font-semibold mb-3">{t.footer.contactUs}</div>
           <ul className="space-y-2 text-gray-400">
             <li>
               <a
@@ -54,7 +59,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} دُكَّانَكْ. جميع الحقوق محفوظة.
+        © {new Date().getFullYear()} {t.common.siteName}. {t.footer.allRightsReserved}.
       </div>
 
       <a
@@ -63,7 +68,7 @@ export default function Footer() {
         rel="noopener noreferrer"
         className="fixed bottom-5 left-5 z-50 bg-green-500 text-white rounded-full px-4 py-3 text-sm font-bold shadow-lg"
       >
-        واتساب
+        WhatsApp
       </a>
     </footer>
   );

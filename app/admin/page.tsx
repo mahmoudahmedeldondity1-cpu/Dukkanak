@@ -3,18 +3,53 @@ import { formatEGP } from "@/lib/format";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
-  const [totalOrders, pendingOrders, totalProducts, lowStock, outOfStock, revenueAgg, recentOrders] =
-    await Promise.all([
-      prisma.order.count(),
-      prisma.order.count({ where: { status: "PENDING" } }),
-      prisma.product.count(),
-      prisma.product.count({ where: { stock: { gt: 0, lte: 5 } } }),
-      prisma.product.count({ where: { stock: 0 } }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: { in: ["PAID", "COD"] } } }),
-      prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 5, include: { items: true } }),
-    ]);
+  const [
+    totalOrders,
+    pendingOrders,
+    supplierFulfillmentOrders,
+    totalProducts,
+    lowStock,
+    outOfStock,
+    revenueAgg,
+    shippingAgg,
+    recentOrders,
+    deliveredOrders,
+  ] = await Promise.all([
+    prisma.order.count(),
+    prisma.order.count({ where: { status: "PENDING" } }),
+    prisma.order.count({ where: { status: { in: ["SENT_TO_SUPPLIER", "SUPPLIER_PROCESSING"] } } }),
+    prisma.product.count(),
+    prisma.product.count({ where: { stock: { gt: 0, lte: 5 } } }),
+    prisma.product.count({ where: { stock: 0 } }),
+    prisma.order.aggregate({
+      _sum: { total: true, subtotal: true },
+      where: { paymentStatus: { in: ["PAID", "COD"] }, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+    }),
+    prisma.order.aggregate({
+      _sum: { shippingFee: true },
+      where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
+    }),
+    prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 5, include: { items: true } }),
+    prisma.order.findMany({
+      where: { status: "DELIVERED" },
+      include: { items: true },
+    }),
+  ]);
 
   const revenue = Number(revenueAgg._sum.total || 0);
+  const grossSales = Number(revenueAgg._sum.subtotal || 0);
+  const totalShippingCollected = Number(shippingAgg._sum.shippingFee || 0);
+
+  // Calculate dropshipping wholesale cost and actual net profit for delivered orders
+  let dropshippingWholesaleCost = 0;
+  for (const order of deliveredOrders) {
+    for (const item of order.items) {
+      if (item.costPriceSnapshot) {
+        dropshippingWholesaleCost += Number(item.costPriceSnapshot) * item.quantity;
+      }
+    }
+  }
+  const estimatedNetProfit = deliveredOrders.reduce((acc, o) => acc + Number(o.total), 0) - dropshippingWholesaleCost;
   const avgOrderValue = totalOrders > 0 ? revenue / totalOrders : 0;
 
   return (
@@ -22,13 +57,14 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold mb-6">نظرة عامة</h1>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="إجمالي الإيرادات" value={formatEGP(revenue)} />
+        <StatCard label="إجمالي الإيرادات المحصلة" value={formatEGP(revenue)} />
+        <StatCard label="إجمالي المبيعات (Gross)" value={formatEGP(grossSales)} />
+        <StatCard label="صافي الربح المسجل (دروب شيب)" value={formatEGP(estimatedNetProfit)} highlight={estimatedNetProfit > 0} />
+        <StatCard label="تكلفة شراء المنتجات (الموردين)" value={formatEGP(dropshippingWholesaleCost)} />
         <StatCard label="إجمالي الطلبات" value={String(totalOrders)} />
         <StatCard label="طلبات قيد الانتظار" value={String(pendingOrders)} highlight={pendingOrders > 0} />
-        <StatCard label="متوسط قيمة الطلب" value={formatEGP(avgOrderValue)} />
-        <StatCard label="عدد المنتجات" value={String(totalProducts)} />
-        <StatCard label="مخزون منخفض" value={String(lowStock)} highlight={lowStock > 0} />
-        <StatCard label="غير متوفر" value={String(outOfStock)} highlight={outOfStock > 0} />
+        <StatCard label="تجهيز وتوريد الموردين" value={String(supplierFulfillmentOrders)} highlight={supplierFulfillmentOrders > 0} />
+        <StatCard label="رسوم الشحن المحصلة" value={formatEGP(totalShippingCollected)} />
       </div>
 
       <div className="flex items-center justify-between mb-4">

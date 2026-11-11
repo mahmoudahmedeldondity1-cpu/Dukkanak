@@ -3,6 +3,7 @@ import { authOptions, isAdminRole } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatEGP, formatDate } from "@/lib/format";
+import OrderReturnButton from "./OrderReturnButton";
 
 const statusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
@@ -33,6 +34,9 @@ export default async function OrderDetailPage({
     include: {
       items: true,
       address: true,
+      returnRequests: {
+        select: { id: true, status: true },
+      },
     },
   });
 
@@ -136,10 +140,17 @@ export default async function OrderDetailPage({
         <p>
           طريقة الدفع:{" "}
           {order.paymentMethod === "COD"
-            ? "الدفع عند الاستلام"
+            ? "الدفع عند الاستلام (COD)"
             : order.paymentMethod}
-          </p>
+        </p>
       </div>
+
+      {order.status !== "CANCELLED" && order.status !== "REFUNDED" && (
+        <OrderReturnButton
+          orderId={order.id}
+          hasExistingRequest={order.returnRequests.length > 0}
+        />
+      )}
     </div>
-      );
+  );
 }

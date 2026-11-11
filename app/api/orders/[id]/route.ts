@@ -35,6 +35,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.status) allowedFields.status = body.status;
   if (body.paymentStatus) allowedFields.paymentStatus = body.paymentStatus;
   if (body.trackingNumber !== undefined) allowedFields.trackingNumber = body.trackingNumber;
+  if (body.supplierOrderId !== undefined) allowedFields.supplierOrderId = body.supplierOrderId;
+  if (body.supplierNotes !== undefined) allowedFields.supplierNotes = body.supplierNotes;
 
   const order = await prisma.order.update({ where: { id: params.id }, data: allowedFields });
 

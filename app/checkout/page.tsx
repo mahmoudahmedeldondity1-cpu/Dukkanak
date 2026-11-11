@@ -6,9 +6,11 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCartStore } from "@/lib/store/cart";
 import { formatEGP } from "@/lib/format";
-import { EGYPT_GOVERNORATES } from "@/lib/governorates";
+import { EGYPT_GOVERNORATES, getShippingFee } from "@/lib/governorates";
+import { useLocale } from "@/lib/i18n";
 
 export default function CheckoutPage() {
+  const { t } = useLocale();
   const { data: session, status } = useSession();
   const router = useRouter();
   const items = useCartStore((s) => s.items);
@@ -28,7 +30,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const shippingFee = subtotal - discount >= 1000 ? 0 : 60;
+  const shippingFee = getShippingFee(form.governorate, subtotal - discount);
   const total = subtotal - discount + shippingFee;
 
   if (status === "unauthenticated") {

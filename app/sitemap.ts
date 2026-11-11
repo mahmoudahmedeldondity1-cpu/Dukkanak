@@ -1,25 +1,32 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-const baseUrl = "https://dukanak.vercel.app";
+import { getSiteUrl } from "@/lib/config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await prisma.product.findMany({
-    where: {
-      status: "PUBLISHED",
-    },
-    select: {
-      slug: true,
-      updatedAt: true,
-    },
-  });
+  const baseUrl = getSiteUrl();
+  let productUrls: MetadataRoute.Sitemap = [];
 
-  const productUrls: MetadataRoute.Sitemap = products.map((product) => ({
-    url: `${baseUrl}/products/${product.slug}`,
-    lastModified: product.updatedAt || new Date(),
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        status: "PUBLISHED",
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+    });
+
+    productUrls = products.map((product) => ({
+      url: `${baseUrl}/product/${product.slug}`,
+      lastModified: product.updatedAt || new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
+  } catch {
+    // Graceful fallback when DB is unreachable at build time
+  }
 
   return [
     {

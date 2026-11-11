@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
           variantId: item.variantId || null,
           nameSnapshot: product.name + (variant ? ` - ${variant.name}` : ""),
           priceSnapshot: price,
+          costPriceSnapshot: product.costPrice ? Number(product.costPrice) : null,
           quantity: item.quantity,
         });
 
@@ -136,7 +137,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const shippingFee = subtotal - discount >= 1000 ? 0 : 60;
+      const { getShippingFee } = await import("@/lib/governorates");
+      const shippingFee = getShippingFee(data.governorate, subtotal - discount);
       const total = subtotal - discount + shippingFee;
 
       // Create address record

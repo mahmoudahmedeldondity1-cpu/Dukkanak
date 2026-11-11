@@ -5,3 +5,43 @@ export const EGYPT_GOVERNORATES = [
   "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر", "الوادي الجديد",
   "مطروح", "شمال سيناء", "جنوب سيناء",
 ];
+
+export const GOVERNORATE_SHIPPING_RATES: Record<string, number> = {
+  "القاهرة": 45,
+  "الجيزة": 45,
+  "القليوبية": 50,
+  "الإسكندرية": 55,
+  "البحيرة": 60,
+  "الغربية": 60,
+  "المنوفية": 60,
+  "الدقهلية": 60,
+  "الشرقية": 60,
+  "دمياط": 65,
+  "كفر الشيخ": 65,
+  "بورسعيد": 65,
+  "الإسماعيلية": 65,
+  "السويس": 65,
+  "الفيوم": 70,
+  "بني سويف": 70,
+  "المنيا": 75,
+  "أسيوط": 80,
+  "سوهاج": 85,
+  "قنا": 90,
+  "الأقصر": 95,
+  "أسوان": 100,
+  "البحر الأحمر": 110,
+  "الوادي الجديد": 120,
+  "مطروح": 100,
+  "شمال سيناء": 110,
+  "جنوب سيناء": 110,
+};
+
+export function getShippingFee(governorate?: string | null, subtotalAfterDiscount: number = 0): number {
+  if (subtotalAfterDiscount >= 1000) {
+    return 0;
+  }
+  if (!governorate) {
+    return 60;
+  }
+  return GOVERNORATE_SHIPPING_RATES[governorate] ?? 60;
+}

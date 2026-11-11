@@ -57,7 +57,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
         </>
       ) : q ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-2">لا توجد نتائج مطابقة لـ "{q}"</p>
+          <p className="text-gray-500 mb-2">لا توجد نتائج مطابقة لـ &quot;{q}&quot;</p>
           <p className="text-sm text-gray-400 mb-8">جرّب كلمات بحث مختلفة أو تصفح التصنيفات</p>
 
           {popularCategories.length > 0 && (

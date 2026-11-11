@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
+import { getSiteUrl } from "@/lib/config";
+
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
   return {
     rules: {
       userAgent: "*",
@@ -12,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
       ],
     },
 
-    sitemap: "https://dukanak.vercel.app/sitemap.xml",
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

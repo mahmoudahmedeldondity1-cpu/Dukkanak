@@ -32,9 +32,10 @@ model User {
   addresses    Address[]
   orders       Order[]
   reviews      Review[]
-  wishlist     Wishlist?
-  cart         Cart?
-  auditLogs    AuditLog[]
+  wishlist       Wishlist?
+  cart           Cart?
+  auditLogs      AuditLog[]
+  returnRequests ReturnRequest[]
 }
 
 model Address {
@@ -91,7 +92,11 @@ model Supplier {
   contactName  String?
   contactPhone String?
   contactEmail String?
+  address      String?
+  active       Boolean   @default(true)
   notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   products     Product[]
 }
 
@@ -225,6 +230,8 @@ model WishlistItem {
 enum OrderStatus {
   PENDING
   CONFIRMED
+  SENT_TO_SUPPLIER
+  SUPPLIER_PROCESSING
   PROCESSING
   PACKED
   SHIPPED
@@ -268,24 +275,63 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   status          OrderStatus   @default(PENDING)
   trackingNumber  String?
+  supplierOrderId String?
+  supplierNotes   String?
   notes           String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  items    OrderItem[]
+  items           OrderItem[]
+  returnRequests  ReturnRequest[]
 }
 
 model OrderItem {
-  id         String          @id @default(cuid())
-  orderId    String
-  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product         @relation(fields: [productId], references: [id])
-  variantId  String?
-  variant    ProductVariant? @relation(fields: [variantId], references: [id])
-  nameSnapshot String
-  priceSnapshot Decimal      @db.Decimal(10, 2)
-  quantity   Int
+  id              String          @id @default(cuid())
+  orderId         String
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product         @relation(fields: [productId], references: [id])
+  variantId       String?
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+  nameSnapshot    String
+  priceSnapshot   Decimal         @db.Decimal(10, 2)
+  costPriceSnapshot Decimal?      @db.Decimal(10, 2)
+  quantity        Int
+}
+
+// ============== طلبات الاسترجاع والإلغاء ==============
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  ITEM_RECEIVED
+  REFUNDED
+  COMPLETED
+}
+
+enum ReturnReason {
+  DAMAGED_PRODUCT
+  WRONG_ITEM
+  DEFECTIVE
+  NOT_AS_DESCRIBED
+  CHANGED_MIND
+  OTHER
+}
+
+model ReturnRequest {
+  id          String       @id @default(cuid())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  reason      ReturnReason @default(DEFECTIVE)
+  description String?
+  status      ReturnStatus @default(REQUESTED)
+  refundAmount Decimal?    @db.Decimal(10, 2)
+  adminNotes  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 // ============== الكوبونات ==============

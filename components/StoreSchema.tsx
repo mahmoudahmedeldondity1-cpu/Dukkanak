@@ -1,14 +1,17 @@
+import { getSiteUrl, SITE_NAME_AR, SITE_NAME_EN } from "@/lib/config";
+
 export default function StoreSchema() {
+  const siteUrl = getSiteUrl();
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
 
-    name: "دُكَّانَكْ",
-    alternateName: "Dukkanak",
+    name: SITE_NAME_AR,
+    alternateName: SITE_NAME_EN,
 
-    url: "https://dukanak.vercel.app",
+    url: siteUrl,
 
-    logo: "https://dukanak.vercel.app/logo.png",
+    logo: `${siteUrl}/logo.png`,
 
     description:
       "دُكَّانَكْ متجر إلكتروني مصري للتسوق أونلاين مع شحن لجميع محافظات مصر.",
@@ -22,7 +25,7 @@ export default function StoreSchema() {
       "@type": "ContactPoint",
       contactType: "customer service",
       areaServed: "EG",
-      availableLanguage: ["Arabic"],
+      availableLanguage: ["Arabic", "English"],
     },
   };
 

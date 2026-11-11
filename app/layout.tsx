@@ -14,18 +14,22 @@ const cairo = Cairo({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+import { getSiteUrl, SITE_NAME_AR } from "@/lib/config";
+
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dukanak.vercel.app"),
+  metadataBase: new URL(siteUrl),
 
   title: {
-    default: "دُكَّانَكْ | متجرك الإلكتروني المصري",
-    template: "%s | دُكَّانَكْ",
+    default: `${SITE_NAME_AR} | متجرك الإلكتروني المصري`,
+    template: `%s | ${SITE_NAME_AR}`,
   },
 
   description:
     "دُكَّانَكْ — متجر إلكتروني مصري للتسوق أونلاين، مع شحن لجميع محافظات مصر والدفع عند الاستلام.",
 
-  applicationName: "دُكَّانَكْ",
+  applicationName: SITE_NAME_AR,
 
   keywords: [
     "دُكَّانَكْ",
@@ -38,7 +42,12 @@ export const metadata: Metadata = {
   ],
 
   alternates: {
-    canonical: "https://dukanak.vercel.app/",
+    canonical: siteUrl,
+    languages: {
+      ar: siteUrl,
+      en: `${siteUrl}?lang=en`,
+      "x-default": siteUrl,
+    },
   },
 
   robots: {
@@ -47,11 +56,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "دُكَّانَكْ | متجرك الإلكتروني المصري",
+    title: `${SITE_NAME_AR} | متجرك الإلكتروني المصري`,
     description:
       "تسوق أونلاين من دُكَّانَكْ مع شحن لجميع محافظات مصر والدفع عند الاستلام.",
-    url: "https://dukanak.vercel.app/",
-    siteName: "دُكَّانَكْ",
+    url: siteUrl,
+    siteName: SITE_NAME_AR,
     locale: "ar_EG",
     type: "website",
   },

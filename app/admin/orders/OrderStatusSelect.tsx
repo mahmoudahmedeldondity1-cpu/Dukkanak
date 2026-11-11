@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 const statuses = [
   { value: "PENDING", label: "قيد الانتظار" },
   { value: "CONFIRMED", label: "تم التأكيد" },
+  { value: "SENT_TO_SUPPLIER", label: "أُرسل للمورد (دروب شيب)" },
+  { value: "SUPPLIER_PROCESSING", label: "تجهيز المورد" },
   { value: "PROCESSING", label: "قيد التجهيز" },
   { value: "PACKED", label: "تم التغليف" },
   { value: "SHIPPED", label: "تم الشحن" },
