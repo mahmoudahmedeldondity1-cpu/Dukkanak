@@ -1,20 +1,16 @@
--- Safe, additive forward-compatible migration for Dukkanak dropshipping and return management
--- Preserves all existing tables, records, users, and orders without data loss
+-- Safe, additive, forward-compatible migration for Dukkanak dropshipping and return management
+-- Preserves all existing tables, records, users, and orders without data loss.
 
--- 1. Add dropshipping supplier fields
+-- 1. Add dropshipping status values to OrderStatus enum
+-- In PostgreSQL, ALTER TYPE ... ADD VALUE must run outside transaction blocks / DO blocks.
+ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'SENT_TO_SUPPLIER';
+ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'SUPPLIER_PROCESSING';
+
+-- 2. Add dropshipping supplier fields
 ALTER TABLE "Supplier" ADD COLUMN IF NOT EXISTS "address" TEXT;
 ALTER TABLE "Supplier" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "Supplier" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE "Supplier" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- 2. Add dropshipping status values to OrderStatus enum if not present
-DO $$
-BEGIN
-    ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'SENT_TO_SUPPLIER';
-    ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'SUPPLIER_PROCESSING';
-EXCEPTION
-    WHEN duplicate_object THEN null;
-END $$;
 
 -- 3. Add dropshipping order tracking fields
 ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "supplierOrderId" TEXT;
