@@ -14,14 +14,15 @@ const updateSupplierSchema = z.object({
   active: z.boolean().optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
   }
 
   const supplier = await prisma.supplier.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       products: {
         select: {
@@ -44,7 +45,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ supplier });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
@@ -57,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const supplier = await prisma.supplier.update({
-    where: { id: params.id },
+    where: { id },
     data: parsed.data,
   });
 
@@ -72,7 +74,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ supplier });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
@@ -80,13 +83,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
   // Check if supplier is linked to any products before attempting deletion
   const linkedProductsCount = await prisma.product.count({
-    where: { supplierId: params.id },
+    where: { supplierId: id },
   });
 
   if (linkedProductsCount > 0) {
     // Soft-deactivate instead of hard deleting to preserve referential history
     const deactivated = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id },
       data: { active: false },
     });
 
@@ -106,7 +109,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   }
 
   const supplier = await prisma.supplier.delete({
-    where: { id: params.id },
+    where: { id },
   });
 
   await prisma.auditLog.create({

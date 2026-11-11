@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminRole } from "@/lib/auth";
 
-export async function GET(_req: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(_req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  const { slug } = await context.params;
   const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       variants: true,
@@ -28,7 +29,8 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
   return NextResponse.json({ product, related });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { slug: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  const { slug } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء" }, { status: 403 });
@@ -36,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   const body = await req.json();
 
   const product = await prisma.product.update({
-    where: { slug: params.slug },
+    where: { slug },
     data: body,
   });
 
@@ -51,13 +53,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   return NextResponse.json(product);
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { slug: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  const { slug } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء" }, { status: 403 });
   }
 
-  const product = await prisma.product.delete({ where: { slug: params.slug } });
+  const product = await prisma.product.delete({ where: { slug } });
 
   await prisma.auditLog.create({
     data: {

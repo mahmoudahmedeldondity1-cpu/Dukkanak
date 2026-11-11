@@ -53,9 +53,9 @@ async function getProduct(rawSlug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await Promise.resolve(params);
+  const { slug } = await params;
   const data = await getProduct(slug);
 
   if (!data) return {};
@@ -107,9 +107,9 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await Promise.resolve(params);
+  const { slug } = await params;
 
   const data = await getProduct(slug);
 

@@ -21,7 +21,7 @@ const statusLabels: Record<string, string> = {
 export default async function OrderDetailPage({
   params,
 }: {
-  params: { orderNumber: string };
+  params: Promise<{ orderNumber: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -29,8 +29,10 @@ export default async function OrderDetailPage({
     redirect("/login");
   }
 
+  const { orderNumber } = await params;
+
   const order = await prisma.order.findUnique({
-    where: { orderNumber: params.orderNumber },
+    where: { orderNumber },
     include: {
       items: true,
       address: true,

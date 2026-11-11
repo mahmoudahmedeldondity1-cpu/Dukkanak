@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminRole } from "@/lib/auth";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "يجب تسجيل الدخول" }, { status: 401 });
 
   const order = await prisma.order.findFirst({
     where: {
-      OR: [{ id: params.id }, { orderNumber: params.id }],
+      OR: [{ id }, { orderNumber: id }],
     },
     include: { items: true, address: true },
   });
@@ -24,7 +25,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ order });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء" }, { status: 403 });
@@ -38,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.supplierOrderId !== undefined) allowedFields.supplierOrderId = body.supplierOrderId;
   if (body.supplierNotes !== undefined) allowedFields.supplierNotes = body.supplierNotes;
 
-  const order = await prisma.order.update({ where: { id: params.id }, data: allowedFields });
+  const order = await prisma.order.update({ where: { id }, data: allowedFields });
 
   await prisma.auditLog.create({
     data: {

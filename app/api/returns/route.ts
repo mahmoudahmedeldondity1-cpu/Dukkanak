@@ -75,6 +75,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "الطلب غير موجود أو غير تابع لك" }, { status: 404 });
   }
 
+  // Fetch configured return window days from store settings
+  const returnWindowSetting = await prisma.setting.findUnique({
+    where: { key: "return_window_days" },
+  });
+  const returnWindowDays = Math.max(1, Number(returnWindowSetting?.value) || 14);
+
+  // If order is delivered, verify delivery elapsed time is within configured return window
+  if (order.status === "DELIVERED") {
+    const elapsedDays = (Date.now() - new Date(order.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (elapsedDays > returnWindowDays) {
+      return NextResponse.json(
+        { error: `انتهت الفترة المسموحة للاسترجاع (${returnWindowDays} يومًا من تاريخ التوصيل)` },
+        { status: 400 }
+      );
+    }
+  } else if (order.status === "CANCELLED" || order.status === "REFUNDED") {
+    return NextResponse.json({ error: "الطلب ملغي أو مسترد بالفعل" }, { status: 400 });
+  }
+
   // Check if a pending return request already exists
   const existing = await prisma.returnRequest.findFirst({
     where: {

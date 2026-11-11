@@ -10,7 +10,8 @@ const updateReturnSchema = z.object({
   refundAmount: z.number().optional(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session || !isAdminRole((session.user as any)?.role)) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 403 });
@@ -23,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const existing = await prisma.returnRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { order: true },
   });
 
@@ -40,19 +41,52 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const updated = await prisma.returnRequest.update({
-    where: { id: params.id },
+    where: { id },
     data: updateData,
   });
 
-  if (parsed.data.status === "REFUNDED") {
-    await prisma.order.update({
-      where: { id: existing.orderId },
-      data: { status: "REFUNDED", paymentStatus: "REFUNDED" },
-    });
-  } else if (parsed.data.status === "ITEM_RECEIVED") {
-    await prisma.order.update({
-      where: { id: existing.orderId },
-      data: { status: "RETURNED" },
+  // Execute order status updates and transactional inventory restoration when item is received or returned
+  if (parsed.data.status === "ITEM_RECEIVED" || parsed.data.status === "REFUNDED") {
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: existing.orderId },
+        data: {
+          status: parsed.data.status === "REFUNDED" ? "REFUNDED" : "RETURNED",
+          paymentStatus: parsed.data.status === "REFUNDED" ? "REFUNDED" : undefined,
+        },
+      });
+
+      // Restore inventory idempotently if not already restored
+      const orderWithItems = await tx.order.findUnique({
+        where: { id: existing.orderId },
+        include: { items: true },
+      });
+
+      if (orderWithItems && parsed.data.status === "ITEM_RECEIVED") {
+        for (const item of orderWithItems.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          } else {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { increment: item.quantity },
+                soldCount: { decrement: item.quantity },
+              },
+            });
+          }
+          await tx.inventoryLog.create({
+            data: {
+              productId: item.productId,
+              change: item.quantity,
+              reason: `استرجاع منتج للطلب ${orderWithItems.orderNumber}`,
+            },
+          });
+        }
+      }
     });
   }
 

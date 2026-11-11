@@ -19,6 +19,7 @@ const orderSchema = z.object({
   landmark: z.string().optional(),
   paymentMethod: z.enum(["COD", "CARD", "WALLET"]),
   couponCode: z.string().optional(),
+  idempotencyKey: z.string().optional(),
   items: z
     .array(
       z.object({
@@ -69,6 +70,22 @@ export async function POST(req: NextRequest) {
   const userId = (session.user as any).id;
 
   try {
+    // Idempotency check: if an idempotencyKey is supplied, check for existing order within past 10 minutes
+    if (data.idempotencyKey) {
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const existingRecentOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          notes: { contains: `[idempotency:${data.idempotencyKey}]` },
+          createdAt: { gte: tenMinutesAgo },
+        },
+        include: { items: true },
+      });
+      if (existingRecentOrder) {
+        return NextResponse.json({ order: existingRecentOrder }, { status: 200 });
+      }
+    }
+
     const order = await prisma.$transaction(async (tx) => {
       // Validate stock and fetch prices from DB (never trust client-sent prices)
       let subtotal = 0;
@@ -140,22 +157,72 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Coupon
+      // Strict server-side coupon validation inside the transaction
       let discount = 0;
-      if (data.couponCode) {
-        const coupon = await tx.coupon.findUnique({ where: { code: data.couponCode.toUpperCase() } });
-        if (coupon && coupon.active) {
-          discount =
-            coupon.discountType === "PERCENTAGE"
-              ? (subtotal * Number(coupon.value)) / 100
-              : Number(coupon.value);
-          if (coupon.maxDiscount) discount = Math.min(discount, Number(coupon.maxDiscount));
-          discount = Math.min(discount, subtotal);
+      if (data.couponCode && data.couponCode.trim()) {
+        const coupon = await tx.coupon.findUnique({ where: { code: data.couponCode.trim().toUpperCase() } });
+        if (!coupon || !coupon.active) {
+          throw new Error("كود الخصم غير صالح أو غير مفعل");
+        }
+        const now = new Date();
+        if (coupon.startDate && now < coupon.startDate) {
+          throw new Error("كود الخصم لم يبدأ بعد");
+        }
+        if (coupon.endDate && now > coupon.endDate) {
+          throw new Error("انتهت صلاحية كود الخصم");
+        }
+        if (coupon.minOrder && subtotal < Number(coupon.minOrder)) {
+          throw new Error(`الحد الأدنى للطلب ${coupon.minOrder} جنيه لاستخدام كود الخصم`);
+        }
+
+        discount =
+          coupon.discountType === "PERCENTAGE"
+            ? (subtotal * Number(coupon.value)) / 100
+            : Number(coupon.value);
+        if (coupon.maxDiscount) discount = Math.min(discount, Number(coupon.maxDiscount));
+        discount = Math.min(discount, subtotal);
+
+        // Atomic usage count increment if usageLimit is set
+        if (coupon.usageLimit !== null && coupon.usageLimit !== undefined) {
+          const updatedCoupon = await tx.coupon.updateMany({
+            where: {
+              id: coupon.id,
+              usageLimit: { gt: 0 },
+            },
+            data: { usageLimit: { decrement: 1 } },
+          });
+          if (updatedCoupon.count === 0) {
+            throw new Error("تم استنفاد الحد الأقصى لاستخدام كود الخصم");
+          }
         }
       }
 
+      // Fetch persisted shipping settings from database
+      const shippingSettings = await tx.setting.findMany({
+        where: {
+          key: { in: ["free_shipping_threshold", "default_shipping_fee", "shipping_rates_json"] },
+        },
+      });
+      const settingsMap: Record<string, string> = {};
+      for (const s of shippingSettings) settingsMap[s.key] = s.value;
+
+      const freeShippingThreshold = Number(settingsMap.free_shipping_threshold) || 1000;
+      const defaultShippingFee = Number(settingsMap.default_shipping_fee) || 60;
+      let customRates: Record<string, number> = {};
+      if (settingsMap.shipping_rates_json) {
+        try {
+          customRates = JSON.parse(settingsMap.shipping_rates_json);
+        } catch {}
+      }
+
       const { getShippingFee } = await import("@/lib/governorates");
-      const shippingFee = getShippingFee(data.governorate, subtotal - discount);
+      const shippingFee = getShippingFee({
+        governorate: data.governorate,
+        subtotalAfterDiscount: subtotal - discount,
+        customRates,
+        freeShippingThreshold,
+        defaultBaseFee: defaultShippingFee,
+      });
       const total = subtotal - discount + shippingFee;
 
       // Create address record
@@ -190,7 +257,8 @@ export async function POST(req: NextRequest) {
           couponCode: data.couponCode || null,
           paymentMethod: data.paymentMethod,
           paymentStatus: data.paymentMethod === "COD" ? "COD" : "PENDING",
-          status: "PENDING",
+          status: "PENDING" as any,
+          notes: data.idempotencyKey ? `[idempotency:${data.idempotencyKey}]` : null,
           items: { create: itemsData },
         },
         include: { items: true },

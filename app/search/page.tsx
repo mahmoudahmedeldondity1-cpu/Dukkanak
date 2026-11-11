@@ -2,8 +2,13 @@ import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
-  const q = (searchParams.q || "").trim();
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const resolved = await searchParams;
+  const q = (resolved.q || "").trim();
 
   const products = q
     ? await prisma.product.findMany({

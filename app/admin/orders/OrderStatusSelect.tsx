@@ -21,6 +21,18 @@ const statuses = [
 export default function OrderStatusSelect({ orderId, status }: { orderId: string; status: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+
+  async function handleCollectCOD() {
+    if (!confirm("تأكيد استلام وتحصيل مبلغ الدفع عند الاستلام من شركة الشحن؟")) return;
+    setCollecting(true);
+    await fetch(`/api/admin/orders/${orderId}/collect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    setCollecting(false);
+    router.refresh();
+  }
 
   async function handleChange(newStatus: string) {
     setLoading(true);
@@ -38,7 +50,7 @@ export default function OrderStatusSelect({ orderId, status }: { orderId: string
     <div className="flex items-center gap-2">
       <select
         defaultValue={status}
-        disabled={loading}
+        disabled={loading || collecting}
         onChange={(e) => handleChange(e.target.value)}
         className="text-xs border border-gray-300 rounded-md px-2 py-1"
       >
@@ -46,6 +58,15 @@ export default function OrderStatusSelect({ orderId, status }: { orderId: string
           <option key={s.value} value={s.value}>{s.label}</option>
         ))}
       </select>
+
+      <button
+        type="button"
+        onClick={handleCollectCOD}
+        disabled={loading || collecting}
+        className="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-medium"
+      >
+        {collecting ? "جاري..." : "تأكيد التحصيل (COD)"}
+      </button>
     </div>
   );
 }

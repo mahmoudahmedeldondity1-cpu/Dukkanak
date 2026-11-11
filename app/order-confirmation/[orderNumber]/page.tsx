@@ -8,9 +8,14 @@ const statusLabels: Record<string, string> = {
   CONFIRMED: "تم التأكيد",
 };
 
-export default async function OrderConfirmationPage({ params }: { params: { orderNumber: string } }) {
+export default async function OrderConfirmationPage({
+  params,
+}: {
+  params: Promise<{ orderNumber: string }>;
+}) {
+  const { orderNumber } = await params;
   const order = await prisma.order.findUnique({
-    where: { orderNumber: params.orderNumber },
+    where: { orderNumber },
     include: { items: true, address: true },
   });
 

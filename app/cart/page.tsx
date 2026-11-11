@@ -5,8 +5,10 @@ import Image from "next/image";
 import { useCartStore } from "@/lib/store/cart";
 import { formatEGP } from "@/lib/format";
 import { useState } from "react";
+import { useLocale } from "@/lib/i18n";
 
 export default function CartPage() {
+  const { t } = useLocale();
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -66,9 +68,9 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <p className="text-lg text-gray-600 mb-6">السلة فارغة</p>
+        <p className="text-lg text-gray-600 mb-6">{t.cart.emptyCart}</p>
         <Link href="/products" className="btn-primary">
-          تابع التسوق
+          {t.cart.continueShopping}
         </Link>
       </div>
     );
@@ -76,7 +78,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">السلة</h1>
+      <h1 className="text-2xl font-bold mb-6">{t.cart.title}</h1>
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-4">
@@ -120,7 +122,7 @@ export default function CartPage() {
                     onClick={() => removeItem(item.productId, item.variantId)}
                     className="text-sm text-red-600"
                   >
-                    حذف
+                    {t.cart.removeItem}
                   </button>
                 </div>
               </div>
@@ -129,38 +131,38 @@ export default function CartPage() {
         </div>
 
         <div className="card p-5 h-fit">
-          <h3 className="font-bold mb-4">ملخص الطلب</h3>
+          <h3 className="font-bold mb-4">{t.checkout.orderSummary}</h3>
 
           <div className="flex gap-2 mb-4">
             <input
               value={coupon}
               onChange={(e) => setCoupon(e.target.value)}
-              placeholder="كود الخصم"
+              placeholder={t.checkout.couponCode}
               className="input-field"
             />
             <button onClick={applyCoupon} className="btn-secondary text-sm shrink-0">
-              تطبيق
+              {t.checkout.applyCoupon}
             </button>
           </div>
           {couponMsg && <p className="text-xs mb-3 text-gray-600">{couponMsg}</p>}
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">المجموع الفرعي</span>
+              <span className="text-gray-500">{t.cart.subtotal}</span>
               <span>{formatEGP(subtotal)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-green-700">
-                <span>الخصم</span>
+                <span>{t.cart.discount}</span>
                 <span>−{formatEGP(discount)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-500">الشحن</span>
-              <span>{shippingFee === 0 ? "مجاني" : formatEGP(shippingFee)}</span>
+              <span className="text-gray-500">{t.cart.shippingFee}</span>
+              <span>{shippingFee === 0 ? t.cart.freeShipping : formatEGP(shippingFee)}</span>
             </div>
             <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2 mt-2">
-              <span>الإجمالي</span>
+              <span>{t.cart.total}</span>
               <span>{formatEGP(total)}</span>
             </div>
           </div>
@@ -170,13 +172,13 @@ export default function CartPage() {
             onClick={handleWhatsAppOrder}
             className="w-full mt-5 bg-green-500 hover:bg-green-600 text-white rounded-lg py-2.5 font-bold"
           >
-            اطلب عبر واتساب
+            WhatsApp
           </button>
           <Link href="/checkout" className="btn-primary w-full mt-3 block text-center">
-            إتمام الطلب من الموقع
+            {t.cart.proceedToCheckout}
           </Link>
           <Link href="/products" className="block text-center text-sm text-gray-500 mt-3">
-            متابعة التسوق
+            {t.cart.continueShopping}
           </Link>
         </div>
       </div>

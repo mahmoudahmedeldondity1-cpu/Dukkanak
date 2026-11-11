@@ -6,47 +6,37 @@ export const EGYPT_GOVERNORATES = [
   "مطروح", "شمال سيناء", "جنوب سيناء",
 ];
 
-export const GOVERNORATE_SHIPPING_RATES: Record<string, number> = {
-  "القاهرة": 45,
-  "الجيزة": 45,
-  "القليوبية": 50,
-  "الإسكندرية": 55,
-  "البحيرة": 60,
-  "الغربية": 60,
-  "المنوفية": 60,
-  "الدقهلية": 60,
-  "الشرقية": 60,
-  "دمياط": 65,
-  "كفر الشيخ": 65,
-  "بورسعيد": 65,
-  "الإسماعيلية": 65,
-  "السويس": 65,
-  "الفيوم": 70,
-  "بني سويف": 70,
-  "المنيا": 75,
-  "أسيوط": 80,
-  "سوهاج": 85,
-  "قنا": 90,
-  "الأقصر": 95,
-  "أسوان": 100,
-  "البحر الأحمر": 110,
-  "الوادي الجديد": 120,
-  "مطروح": 100,
-  "شمال سيناء": 110,
-  "جنوب سيناء": 110,
-};
+export const DEFAULT_BASE_SHIPPING_FEE = 60;
+export const DEFAULT_FREE_SHIPPING_THRESHOLD = 1000;
 
-export function getShippingFee(
-  governorate?: string | null,
-  subtotalAfterDiscount: number = 0,
-  freeShippingThreshold: number = 1000,
-  defaultBaseFee: number = 60
-): number {
-  if (subtotalAfterDiscount >= freeShippingThreshold && freeShippingThreshold > 0) {
+export interface ShippingCalculationOptions {
+  governorate?: string | null;
+  subtotalAfterDiscount: number;
+  customRates?: Record<string, number>;
+  freeShippingThreshold?: number;
+  defaultBaseFee?: number;
+}
+
+/**
+ * Calculates shipping fee dynamically based on persisted configuration,
+ * discount totals, and destination governorate.
+ */
+export function getShippingFee(options: ShippingCalculationOptions): number {
+  const {
+    governorate,
+    subtotalAfterDiscount,
+    customRates = {},
+    freeShippingThreshold = DEFAULT_FREE_SHIPPING_THRESHOLD,
+    defaultBaseFee = DEFAULT_BASE_SHIPPING_FEE,
+  } = options;
+
+  if (freeShippingThreshold > 0 && subtotalAfterDiscount >= freeShippingThreshold) {
     return 0;
   }
+
   if (!governorate) {
     return defaultBaseFee;
   }
-  return GOVERNORATE_SHIPPING_RATES[governorate] ?? defaultBaseFee;
+
+  return customRates[governorate] ?? defaultBaseFee;
 }
